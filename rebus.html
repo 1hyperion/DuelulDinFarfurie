@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style>
+<title>Rebus Alimentația</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap">
+<style>
+/* Layout: un singur ecran fara scroll; sus ghicitoarea activa, la mijloc grila, jos numerele 1-11 si butoanele. Coloana din mijloc e colorata, cuvantul ei e ascuns. */
+:root{
+  --bg:#fcded1; --panel:#f7cab7; --ink:#2b0d07; --red:#f04c33; --maroon:#6d0e00;
+  --cell:#fff4ee; --key:#f7cab7; --line:#e9a58c; --good:#3f7a1a; --good-soft:#d9eab8; --bad:#c23a24; --bad-soft:#f8b8a8;
+  --display:'Lilita One','Arial Black',sans-serif; --body:'Nunito','Segoe UI',system-ui,sans-serif;
+  --cs:min(calc((100vw - 40px) / 10 - 3px),calc((100dvh - 300px) / 11 - 3px));
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#2a1410; --panel:#4a241b; --ink:#fde9e0; --red:#ff6b52; --maroon:#7a1a0a;
+  --cell:#3a1c15; --key:#7a3d2f; --line:#7a3d2f; --good:#9fd05a; --good-soft:#2f3f1a; --bad:#ff8a74; --bad-soft:#5a2218; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#2a1410; --panel:#4a241b; --ink:#fde9e0; --red:#ff6b52; --maroon:#7a1a0a;
+  --cell:#3a1c15; --key:#7a3d2f; --line:#7a3d2f; --good:#9fd05a; --good-soft:#2f3f1a; --bad:#ff8a74; --bad-soft:#5a2218; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-weight:600;padding-inline:16px;padding-block:10px;overflow:hidden}
+main{max-width:none;height:100%;margin:0 auto;display:flex;flex-direction:column;gap:10px;min-height:0}
+#active{background:var(--cell);border:3px solid var(--red);border-radius:16px;padding:12px 18px;display:flex;flex-direction:column;gap:4px}
+#active .lab{font-family:var(--display);color:var(--red);font-size:clamp(1.1rem,2.4vw,1.8rem);text-transform:uppercase;line-height:1}
+#active .q{font-size:clamp(1.05rem,2.6vw,2rem);line-height:1.3;font-weight:800}
+#active .len{font-size:clamp(.8rem,1.6vw,1.1rem);font-weight:800;opacity:.75}
+.board{background:var(--panel);border-radius:16px;padding:10px;display:flex;align-items:center;justify-content:center;flex:1 1 0;min-height:0;overflow:hidden}
+.grid{display:grid;gap:3px}
+.c{position:relative;width:var(--cs);height:var(--cs)}
+.c input{width:100%;height:100%;border:2px solid var(--line);border-radius:6px;background:var(--cell);color:var(--ink);font:inherit;font-family:var(--display);font-size:calc(var(--cs) * .62);text-align:center;text-transform:uppercase;padding:0;caret-color:var(--red)}
+.c.key input{background:var(--key);border-color:var(--red);border-width:3px}
+.c input:focus{outline:3px solid var(--ink);outline-offset:1px}
+.c.row-on input{border-color:var(--red)}
+.c.ok input{background:var(--good-soft);border-color:var(--good);color:var(--good)}
+.c.no input{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.c input{scroll-margin-block:200px 80px}
+.c b{position:absolute;top:2px;left:4px;font-size:max(.55rem,calc(var(--cs) * .22));font-weight:800;line-height:1;pointer-events:none;color:var(--maroon)}
+:root[data-theme="dark"] .c b{color:var(--ink)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .c b{color:var(--ink)}}
+.nav{display:flex;gap:4px;justify-content:center;flex:none}
+.nav button{flex:1 1 0;max-width:36px;aspect-ratio:1;padding:0;border-radius:50%;background:var(--cell);color:var(--ink);border:2px solid var(--line);font-family:var(--display);font-size:.95rem}
+.nav button.on{background:var(--red);border-color:var(--red);color:#fff}
+.nav button.done{background:var(--good-soft);border-color:var(--good);color:var(--good)}
+.nav button.done.on{background:var(--good);border-color:var(--good);color:#fff}
+.tools{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;flex:none}
+button{font:inherit;font-weight:800;font-size:.82rem;border:0;border-radius:999px;padding:7px 14px;background:var(--red);color:#fff;cursor:pointer}
+button.alt{background:var(--maroon);color:#fff}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+#win{position:fixed;inset:0;z-index:80;background:rgba(40,8,2,.72);display:flex;align-items:center;justify-content:center;padding:16px}
+#win[hidden]{display:none}
+#win .card{background:var(--maroon);color:#fff;border-radius:22px;padding:24px 28px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;max-width:420px}
+#win h2{font-family:var(--display);font-weight:400;font-size:2.2rem;margin:0}
+#win p{margin:0;font-size:1.05rem}
+#win button{background:#fff;color:var(--maroon);font-size:1rem;padding:10px 22px}
+/* ecran lat: grila mare in stanga pe toata inaltimea, intrebarea mare in dreapta, fara scroll */
+@media (min-width:800px) and (orientation:landscape){
+  :root{--cs:min(calc((100dvh - 44px) / 11 - 3px),calc((100vw - 460px) / 10 - 3px))}
+  main{display:grid;grid-template-columns:auto minmax(280px,1fr);grid-template-rows:1fr auto auto;column-gap:20px;row-gap:12px}
+  .board{grid-column:1;grid-row:1 / -1;padding:10px}
+  #active{grid-column:2;grid-row:1;justify-content:center;gap:14px;padding:24px 28px;min-height:0}
+  #active .lab{font-size:clamp(1.4rem,2.6vw,2.4rem)}
+  #active .q{font-size:clamp(1.3rem,2.9vw,2.8rem);line-height:1.35}
+  #active .len{font-size:clamp(1rem,1.6vw,1.5rem)}
+  .nav{grid-column:2;grid-row:2;flex-wrap:wrap;justify-content:flex-start;gap:8px}
+  .nav button{flex:none;width:clamp(38px,4.2vw,64px);max-width:none;font-size:clamp(1.1rem,1.8vw,1.6rem)}
+  .tools{grid-column:2;grid-row:3;justify-content:flex-start;gap:10px}
+  button{font-size:clamp(.95rem,1.5vw,1.3rem);padding:10px 22px}
+  .c input{border-width:2px}
+}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:100}
+</style>
+
+</head>
+<body>
+<main>
+  <section id="active" aria-live="polite"></section>
+  <section class="board" aria-label="Grila rebusului"><div class="grid" id="grid"></div></section>
+  <div class="nav" id="nav" aria-label="Alege ghicitoarea"></div>
+  <div class="tools">
+    <button id="check" type="button">Verifică</button>
+    <button id="hint" class="alt" type="button">O literă</button>
+    <button id="fill" class="alt" type="button">Completează cuvântul</button>
+    <button id="reset" class="alt" type="button">De la capăt</button>
+  </div>
+</main>
+<div id="win" hidden><div class="card"><h2>Bravo!</h2><p>Ai rezolvat toate ghicitorile. Cuvântul de pe coloana colorată este <b>ALIMENTAȚIE</b>. Mănâncă variat, mănâncă echilibrat!</p><button id="again" type="button">Joacă din nou</button></div></div>
+<canvas id="fx"></canvas>
+
+<script>
+/* i = pozitia (de la 1) a literei care cade pe coloana colorata; cuvantul ascuns pe coloana: ALIMENTATIE */
+const W=[
+{w:'ARDEI',i:1,q:'Poate fi iute sau dulce, roșu, galben ori verde. Îl punem în salată sau îl umplem cu orez și carne. Are mai multă vitamina C decât lămâia.'},
+{w:'LAMAIE',i:1,q:'Galbenă la față și acră la gust, ne dă vitamina C când suntem răciți. Cine este?'},
+{w:'CIREASA',i:2,q:'Fruct mic și roșu, cu codiță lungă și sâmbure tare în mijloc. Se coace în pom la început de vară.'},
+{w:'MAR',i:1,q:'Rotund, roșu sau verde, crește în pom. Se spune că unul pe zi ține doctorul departe.'},
+{w:'CEAPA',i:2,q:'Cu cât o tai mai mult, cu atât mai tare plângi, deși nimeni nu te-a supărat.'},
+{w:'BANANA',i:3,q:'Poartă haină galbenă, o dezbraci și o mănânci. Sportivii o iau pentru energie și potasiu.'},
+{w:'CARTOF',i:4,q:'Are ochi, dar nu vede. Crește sub pământ și îl mâncăm fiert, copt sau piure.'},
+{w:'VARZA',i:2,q:'Are o sută de foi, dar nu e carte. O mâncăm proaspătă, murată sau în sarmale.'},
+{w:'STRUGURE',i:2,q:'Crește în ciorchine, din boabe mici și dulci. Se culege toamna, iar uscat se face stafidă.'},
+{w:'ROSII',i:4,q:'Sunt roșii și rotunde, pline de suc și semințe. Le tăiem în salată, iar din ele facem sos și suc.'},
+{w:'PEPENE',i:2,q:'Afară e verde, înăuntru roșu, cu semințe negre. Vara ne răcorește, fiindcă e plin de apă.'}
+];
+const $=s=>document.querySelector(s);
+const left=Math.max(...W.map(x=>x.i-1));
+W.forEach(x=>x.s=left-(x.i-1));
+const cols=Math.max(...W.map(x=>x.s+x.w.length));
+const grid=$('#grid'), cell={}, solved=W.map(()=>false); let row=0;
+grid.style.gridTemplateColumns='repeat('+cols+',auto)';
+const norm=v=>v.normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/[^A-Z]/g,'');
+const nextEd=(r,j,d)=>{for(let k=j+d;k>=0&&k<W[r].w.length;k+=d)if(!cell[r+','+k].inp.readOnly)return k;return -1};
+const firstEd=r=>{const k=nextEd(r,-1,1);return k<0?0:k};
+W.forEach((x,r)=>{
+  for(let c=0;c<cols;c++){
+    const j=c-x.s, d=document.createElement('div');
+    if(j<0||j>=x.w.length){d.className='c';d.style.visibility='hidden';grid.appendChild(d);continue}
+    d.className='c'+(j==x.i-1?' key':'');
+    if(j==0){const b=document.createElement('b');b.textContent=r+1;d.appendChild(b)}
+    const inp=document.createElement('input');
+    inp.maxLength=2;inp.autocomplete='off';inp.autocapitalize='characters';inp.spellcheck=false;
+    inp.setAttribute('aria-label','Cuvântul '+(r+1)+', litera '+(j+1));
+    d.appendChild(inp);grid.appendChild(d);cell[r+','+j]={d,inp};
+    inp.addEventListener('focus',()=>setRow(r));
+    inp.addEventListener('input',()=>{
+      const v=norm(inp.value).slice(-1);inp.value=v;cell[r+','+j].d.classList.remove('ok','no');
+      if(v){const n=nextEd(r,j,1);if(n>=0)cell[r+','+n].inp.focus()}
+      rowCheck(r);
+    });
+    inp.addEventListener('keydown',e=>{
+      const go=(rr,jj)=>{const t=cell[rr+','+jj];if(t){e.preventDefault();t.inp.focus();t.inp.select()}};
+      if(e.key=='Backspace'&&!inp.value){const p=nextEd(r,j,-1);if(p>=0)go(r,p)}
+      else if(e.key=='ArrowLeft'){const p=nextEd(r,j,-1);if(p>=0)go(r,p)}
+      else if(e.key=='ArrowRight'){const p=nextEd(r,j,1);if(p>=0)go(r,p)}
+      else if(e.key=='ArrowUp'||e.key=='ArrowDown'){
+        const rr=r+(e.key=='ArrowUp'?-1:1);if(rr<0||rr>=W.length)return;
+        const abs=x.s+j, jj=Math.min(Math.max(abs-W[rr].s,0),W[rr].w.length-1);go(rr,jj);
+      }
+    });
+  }
+});
+const nav=$('#nav');
+W.forEach((x,r)=>{
+  const b=document.createElement('button');b.type='button';b.id='nv'+r;b.textContent=r+1;b.setAttribute('aria-label','Ghicitoarea '+(r+1));
+  b.onclick=()=>cell[r+','+firstEd(r)].inp.focus();nav.appendChild(b);
+});
+function setRow(r){
+  row=r;const x=W[r];
+  $('#active').innerHTML='<div class="lab">Ghicitoarea '+(r+1)+' din '+W.length+'</div><div class="q"></div><div class="len">'+x.w.length+' litere'+(solved[r]?' · rezolvată':'')+'</div>';
+  $('#active .q').textContent=x.q;
+  W.forEach((_,k)=>{const b=$('#nv'+k);b.classList.toggle('on',k==r);b.classList.toggle('done',solved[k])});
+  document.querySelectorAll('.c').forEach(e=>e.classList.remove('row-on'));
+  x.w.split('').forEach((_,j)=>cell[r+','+j].d.classList.add('row-on'));
+}
+function rowRight(r){return W[r].w.split('').every((ch,j)=>cell[r+','+j].inp.value==ch)}
+function rowCheck(r){
+  if(solved[r]||!rowRight(r))return;
+  solved[r]=true;
+  W[r].w.split('').forEach((_,j)=>{const t=cell[r+','+j];t.inp.readOnly=true;t.d.classList.remove('no');t.d.classList.add('ok')});
+  const b=cell[r+','+(W[r].i-1)].d.getBoundingClientRect();
+  burst(b.left+b.width/2,b.top+b.height/2,90,11);
+  burst(0,innerHeight*.55,45,13);burst(innerWidth,innerHeight*.55,45,13);
+  setRow(r);
+  if(solved.every(Boolean)){win();return}
+  let n=-1;for(let k=1;k<=W.length;k++){const q=(r+k)%W.length;if(!solved[q]){n=q;break}}
+  setTimeout(()=>{const t=cell[n+','+firstEd(n)];t.inp.focus();t.inp.select()},600);
+}
+function win(){
+  setTimeout(()=>{$('#win').hidden=false},900);
+  for(let k=0;k<14;k++)setTimeout(()=>{
+    burst(innerWidth*Math.random(),innerHeight*(.15+Math.random()*.35),110,15);
+    burst(0,innerHeight*.6,60,16);burst(innerWidth,innerHeight*.6,60,16);
+  },k*300);
+}
+$('#check').onclick=()=>{
+  W.forEach((x,r)=>x.w.split('').forEach((ch,j)=>{
+    const t=cell[r+','+j],v=t.inp.value;if(solved[r])return;t.d.classList.remove('ok','no');
+    if(v)t.d.classList.add(v==ch?'ok':'no');
+  }));
+};
+$('#hint').onclick=()=>{
+  const x=W[row];if(solved[row])return;
+  for(let j=0;j<x.w.length;j++){
+    const t=cell[row+','+j];
+    if(t.inp.value!=x.w[j]){t.inp.value=x.w[j];t.d.classList.remove('no');break}
+  }
+  rowCheck(row);
+};
+$('#fill').onclick=()=>{
+  const x=W[row];if(solved[row])return;
+  x.w.split('').forEach((ch,j)=>{cell[row+','+j].inp.value=ch});
+  rowCheck(row);
+};
+function reset(){
+  W.forEach((x,r)=>{solved[r]=false;x.w.split('').forEach((_,j)=>{const t=cell[r+','+j];t.d.classList.remove('ok','no');t.inp.value='';t.inp.readOnly=false})});
+  $('#win').hidden=true;cell['0,'+firstEd(0)].inp.focus();setRow(0);
+}
+$('#reset').onclick=$('#again').onclick=reset;
+/* confetti */
+const cv=$('#fx'),cx=cv.getContext('2d');let P=[],raf=0;
+const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+function fit(){cv.width=innerWidth*devicePixelRatio;cv.height=innerHeight*devicePixelRatio}
+addEventListener('resize',fit);fit();
+function burst(x,y,n,sp){
+  if(reduce)return;const cols=['#f04c33','#fdc453','#568e22','#f7cab6','#ffffff','#e25134','#6d0e00'];
+  for(let i=0;i<n;i++){const a=Math.random()*6.283,s=(Math.random()*.6+.4)*sp;
+    P.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-4,w:6+Math.random()*6,h:4+Math.random()*5,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:cols[i%cols.length],l:1})}
+  if(!raf)raf=requestAnimationFrame(tick);
+}
+function tick(){
+  const k=devicePixelRatio;cx.clearRect(0,0,cv.width,cv.height);P=P.filter(p=>p.l>0);
+  for(const p of P){p.vy+=.28;p.vx*=.985;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;p.l-=.012;
+    cx.save();cx.globalAlpha=Math.max(p.l,0);cx.translate(p.x*k,p.y*k);cx.rotate(p.r);cx.fillStyle=p.c;cx.fillRect(-p.w*k/2,-p.h*k/2,p.w*k,p.h*k);cx.restore()}
+  raf=P.length?requestAnimationFrame(tick):0;if(!raf)cx.clearRect(0,0,cv.width,cv.height);
+}
+setRow(0);
+</script>
+
+</body>
+</html>
